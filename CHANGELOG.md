@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.0-beta.8 — 2026-11-07
+
+- **The beauty pass.** Paul's brief: "make it look like
+  somebody paid $100 for it, even though it's free." The pads
+  are bubbles now — big soft-rounded shapes with a hairline
+  rim and a gentle lift off the screen, tinted per pad and per
+  state exactly as before, so a recording pad still breathes
+  red and a looping one still pulses green, just prettier.
+  Every action button wears the same rounded shape, and the
+  flat black room is gone: the app now sits in a deep
+  green-charcoal gradient, oak-dark at the edges. Nothing
+  moved, nothing was renamed — same instrument, finished
+  furniture.
+- Per the release policy, beta.6 retires with this release:
+  beta.8 (current) and beta.7 (fallback) are the two live
+  versions.
+
 ## 0.1.0-beta.7 — 2026-11-07
 
 - **Retune — stage 1 of the voice plan ships.** A new

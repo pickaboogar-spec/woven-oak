@@ -3,9 +3,21 @@
     <style name="Pad">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">0dp</item>
-        <item name="android:layout_margin">6dp</item>
+        <item name="android:layout_margin">7dp</item>
+        <item name="android:background">@drawable/pad_bubble</item>
+        <item name="android:elevation">7dp</item>
         <item name="android:textColor">#F2F2F7</item>
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold</item>
+    </style>
+    <style name="ActionBtn">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:background">@drawable/btn_rounded</item>
+        <item name="android:elevation">4dp</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:textColor">#F2F2F7</item>
+        <item name="android:textSize">15sp</item>
     </style>
 </resources>

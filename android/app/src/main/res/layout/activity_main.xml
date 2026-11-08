@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#101018"
+    android:background="@drawable/bg_app"
     android:padding="14dp">
 
     <LinearLayout
@@ -24,7 +24,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0.1.0-beta.7 · free forever"
+            android:text="0.1.0-beta.8 · free forever"
             android:textColor="#A7A7B8"
             android:textSize="12sp" />
     </LinearLayout>
@@ -90,7 +90,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:minHeight="36dp"
-                android:backgroundTint="#2C2C3E"
+                android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#2C2C3E"
                 android:text="♯"
                 android:textColor="#F2F2F7"
                 android:textSize="15sp" />
@@ -111,37 +113,49 @@
             style="@style/Pad"
             android:layout_rowWeight="1"
             android:layout_columnWeight="1"
-            android:backgroundTint="#3D232B" />
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#3D232B" />
         <Button
             android:id="@+id/pad2"
             style="@style/Pad"
             android:layout_rowWeight="1"
             android:layout_columnWeight="1"
-            android:backgroundTint="#3D3123" />
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#3D3123" />
         <Button
             android:id="@+id/pad3"
             style="@style/Pad"
             android:layout_rowWeight="1"
             android:layout_columnWeight="1"
-            android:backgroundTint="#2E3D23" />
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#2E3D23" />
         <Button
             android:id="@+id/pad4"
             style="@style/Pad"
             android:layout_rowWeight="1"
             android:layout_columnWeight="1"
-            android:backgroundTint="#23403D" />
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#23403D" />
         <Button
             android:id="@+id/pad5"
             style="@style/Pad"
             android:layout_rowWeight="1"
             android:layout_columnWeight="1"
-            android:backgroundTint="#233149" />
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#233149" />
         <Button
             android:id="@+id/pad6"
             style="@style/Pad"
             android:layout_rowWeight="1"
             android:layout_columnWeight="1"
-            android:backgroundTint="#31233D" />
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#31233D" />
     </GridLayout>
 
     <LinearLayout
@@ -156,7 +170,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="5dp"
-            android:backgroundTint="#274435"
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#274435"
             android:padding="14dp"
             android:text="▶  Play all"
             android:textColor="#F2F2F7"
@@ -169,7 +185,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="5dp"
-            android:backgroundTint="#2C2C3E"
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#2C2C3E"
             android:padding="14dp"
             android:text="■  Stop all"
             android:textColor="#F2F2F7"
@@ -197,7 +215,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="3dp"
-            android:backgroundTint="#2C2C3E"
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#2C2C3E"
             android:padding="10dp"
             android:text="1"
             android:textColor="#F2F2F7"
@@ -210,7 +230,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="3dp"
-            android:backgroundTint="#2C2C3E"
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#2C2C3E"
             android:padding="10dp"
             android:text="2"
             android:textColor="#F2F2F7"
@@ -223,7 +245,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="3dp"
-            android:backgroundTint="#2C2C3E"
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#2C2C3E"
             android:padding="10dp"
             android:text="3"
             android:textColor="#F2F2F7"
@@ -236,7 +260,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="3dp"
-            android:backgroundTint="#2C2C3E"
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#2C2C3E"
             android:padding="10dp"
             android:text="4"
             android:textColor="#F2F2F7"
@@ -249,7 +275,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="3dp"
-            android:backgroundTint="#2C2C3E"
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#2C2C3E"
             android:padding="10dp"
             android:text="5"
             android:textColor="#F2F2F7"
@@ -261,7 +289,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:backgroundTint="#2C2C3E"
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#2C2C3E"
             android:padding="10dp"
             android:text="6"
             android:textColor="#F2F2F7"
@@ -281,7 +311,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="5dp"
-            android:backgroundTint="#2C2C3E"
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#2C2C3E"
             android:padding="12dp"
             android:text="♪ Sounds…"
             android:textColor="#F2F2F7"
@@ -293,7 +325,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="5dp"
-            android:backgroundTint="#2C2C3E"
+            android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#2C2C3E"
             android:padding="12dp"
             android:text="🎤 Hum → instrument…"
             android:textColor="#F2F2F7"
@@ -305,6 +339,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
         android:backgroundTint="#2C2C3E"
         android:padding="12dp"
         android:text="⇪  Export loop as a WAV gift…"
@@ -316,6 +352,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
         android:backgroundTint="#274435"
         android:padding="12dp"
         android:text="🤖  Chant… build a robot chant from my pads"
@@ -328,6 +366,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
         android:backgroundTint="#2C2C3E"
         android:padding="12dp"
         android:text="🎯  Retune… correct my singing to a scale"

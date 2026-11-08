@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bubble pad: a soft rounded shape the code tints per pad and
+     per state, so every pad reads as a polished, tappable bubble
+     with a hairline rim instead of a flat rectangle. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="30dp" />
+    <solid android:color="#FFFFFF" />
+    <stroke
+        android:width="1.5dp"
+        android:color="#55FFFFFF" />
+    <padding
+        android:left="6dp"
+        android:top="6dp"
+        android:right="6dp"
+        android:bottom="6dp" />
+</shape>
