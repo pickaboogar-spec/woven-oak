@@ -32,6 +32,9 @@ class MainActivity : Activity() {
     private val padIds = intArrayOf(
         R.id.pad1, R.id.pad2, R.id.pad3, R.id.pad4, R.id.pad5, R.id.pad6
     )
+    private val toggleIds = intArrayOf(
+        R.id.tgl1, R.id.tgl2, R.id.tgl3, R.id.tgl4, R.id.tgl5, R.id.tgl6
+    )
 
     // Empty (dim) / Playing (bright) / Ready (mid) tints per pad.
     private val dimTints = longArrayOf(
@@ -50,6 +53,7 @@ class MainActivity : Activity() {
     private lateinit var pitchRange: TextView
     private lateinit var centsMeter: CentsMeterView
     private val buttons = arrayOfNulls<Button>(6)
+    private val toggles = arrayOfNulls<Button>(6)
     private val animators = arrayOfNulls<ValueAnimator>(6)
     private val pads = ArrayList<LoopPad>()
 
@@ -109,6 +113,9 @@ class MainActivity : Activity() {
                 setStatus("")
                 true
             }
+            val t = findViewById<Button>(toggleIds[i])
+            toggles[i] = t
+            t.setOnClickListener { onToggleTap(idx) }
             renderPad(i)
         }
 
@@ -153,6 +160,40 @@ class MainActivity : Activity() {
             LoopPad.State.RECORDING -> pad.stopRecording() // stops, then auto-plays
             LoopPad.State.PLAYING -> pad.stopPlayback()
             LoopPad.State.READY -> pad.startPlayback()
+        }
+    }
+
+    /** "Play together" number row: tap a number to add that pad to
+     *  what's playing, tap it again to drop it back out. */
+    private fun onToggleTap(i: Int) {
+        selectedPad = i
+        val pad = pads[i]
+        when (pad.state) {
+            LoopPad.State.PLAYING -> pad.stopPlayback()
+            LoopPad.State.READY -> pad.startPlayback()
+            LoopPad.State.EMPTY ->
+                setStatus("Pad ${i + 1} is empty — tap the big pad ${i + 1} to record it first.")
+            LoopPad.State.RECORDING ->
+                setStatus("Pad ${i + 1} is recording — tap the big pad to loop it first.")
+        }
+    }
+
+    private fun renderToggle(i: Int) {
+        val t = toggles[i] ?: return
+        val n = i + 1
+        when (pads[i].state) {
+            LoopPad.State.PLAYING -> {
+                t.backgroundTintList = ColorStateList.valueOf(0xFF274435.toInt())
+                t.text = "▶ $n"
+            }
+            LoopPad.State.READY -> {
+                t.backgroundTintList = ColorStateList.valueOf(0xFF4A4A66.toInt())
+                t.text = "$n"
+            }
+            else -> {
+                t.backgroundTintList = ColorStateList.valueOf(0xFF2C2C3E.toInt())
+                t.text = "$n"
+            }
         }
     }
 
@@ -355,6 +396,7 @@ class MainActivity : Activity() {
     }
 
     private fun renderPad(i: Int) {
+        renderToggle(i)
         val pad = pads[i]
         val b = buttons[i] ?: return
         val n = i + 1

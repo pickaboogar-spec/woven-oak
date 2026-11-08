@@ -24,10 +24,19 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0.1.0-beta.1 · free forever"
+            android:text="0.1.0-beta.2 · free forever"
             android:textColor="#A7A7B8"
             android:textSize="12sp" />
     </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Tap a pad to record · Hold a pad to clear it"
+        android:textColor="#F2F2F7"
+        android:textSize="16sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/status"
@@ -165,6 +174,98 @@
             android:text="■  Stop all"
             android:textColor="#F2F2F7"
             android:textSize="17sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Play together — tap numbers to add or drop pads:"
+        android:textColor="#A7A7B8"
+        android:textSize="13sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/tgl1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="3dp"
+            android:backgroundTint="#2C2C3E"
+            android:padding="10dp"
+            android:text="1"
+            android:textColor="#F2F2F7"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/tgl2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="3dp"
+            android:backgroundTint="#2C2C3E"
+            android:padding="10dp"
+            android:text="2"
+            android:textColor="#F2F2F7"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/tgl3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="3dp"
+            android:backgroundTint="#2C2C3E"
+            android:padding="10dp"
+            android:text="3"
+            android:textColor="#F2F2F7"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/tgl4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="3dp"
+            android:backgroundTint="#2C2C3E"
+            android:padding="10dp"
+            android:text="4"
+            android:textColor="#F2F2F7"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/tgl5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="3dp"
+            android:backgroundTint="#2C2C3E"
+            android:padding="10dp"
+            android:text="5"
+            android:textColor="#F2F2F7"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/tgl6"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="#2C2C3E"
+            android:padding="10dp"
+            android:text="6"
+            android:textColor="#F2F2F7"
+            android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
 

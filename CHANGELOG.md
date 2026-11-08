@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.0-beta.2 — 2026-11-07
+
+First field fixes, from the first real phone test (Paul, Moto G,
+same evening beta.1 shipped):
+
+- **The instructions now say it out loud.** A permanent line under
+  the title reads "Tap a pad to record · Hold a pad to clear it" —
+  beta.1 only whispered "hold to clear" in small print on a filled
+  pad, and the first tester had to discover it by accident.
+- **"Play together" number row.** Six big numbered toggles under
+  Play all / Stop all: tap a number to add that pad to what's
+  playing, tap it again to drop it back out. Play 1 + 4, add 3,
+  drop 4, hold a pad to clear and re-record it — building a piece
+  up and down live, instead of only all-or-one.
+
 ## 0.1.0-beta.1 — 2026-11-07
 
 First public beta. **Primary artifact: the native Android app**
