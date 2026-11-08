@@ -24,7 +24,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0.1.0-beta.8 · free forever"
+            android:text="0.1.0-beta.9 · free forever"
             android:textColor="#A7A7B8"
             android:textSize="12sp" />
     </LinearLayout>
@@ -374,12 +374,26 @@
         android:textColor="#F2F2F7"
         android:textSize="15sp" />
 
+    <Button
+        android:id="@+id/calibBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/btn_rounded"
+        android:elevation="4dp"
+        android:backgroundTint="#274435"
+        android:padding="12dp"
+        android:text="🎙  Calibrate… teach the app my voice"
+        android:textColor="#F2F2F7"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:text="Tap a pad to record · tap again to loop it · tap a playing pad to stop it · hold a pad to clear it · Sounds, Hum and Export act on the last pad you tapped"
+        android:text="Tap a pad to record · tap again to loop it · tap a playing pad to stop it · hold a pad to clear it · Sounds, Hum and Export act on the last pad you tapped · Calibrate teaches the app your own voice — it never leaves this phone"
         android:textColor="#A7A7B8"
         android:textSize="12sp" />
 </LinearLayout>

@@ -69,6 +69,23 @@ class MainActivity : Activity() {
 
     private val ui = Handler(Looper.getMainLooper())
     private var pendingPad: Int = -1
+    private var pendingCalib = false
+
+    // Calibration (voice plan, stage 2): the singer's own voice
+    // bank, the walk's state, and its dialog's moving parts.
+    private lateinit var voiceBank: VoiceBank
+    private var calibCapture: CalibCapture? = null
+    private var calibStage = CALIB_COMFORT
+    private var calibStart = -1
+    private var calibTarget = -1
+    private var calibTries = 0
+    private var calibLine = 0
+    private var calibAutoStop: Runnable? = null
+    private var calibStep: TextView? = null
+    private var calibLyric: TextView? = null
+    private var calibInfo: TextView? = null
+    private var calibHearBtn: Button? = null
+    private var calibSingBtn: Button? = null
 
     /** The pad the Sounds / Hum buttons act on: the last one tapped. */
     private var selectedPad = 0
@@ -153,6 +170,8 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.exportBtn).setOnClickListener { exportLoop() }
         findViewById<Button>(R.id.chantBtn).setOnClickListener { showChantDialog() }
         findViewById<Button>(R.id.retuneBtn).setOnClickListener { showRetuneDialog() }
+        voiceBank = VoiceBank(this)
+        findViewById<Button>(R.id.calibBtn).setOnClickListener { showCalibrateDialog() }
         findViewById<Button>(R.id.flatsToggle).setOnClickListener { v ->
             useFlats = !useFlats
             (v as Button).text = if (useFlats) "♭" else "♯"
@@ -223,6 +242,21 @@ class MainActivity : Activity() {
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQ_MIC_CALIB) {
+            val grantedCalib = grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED
+            if (grantedCalib && pendingCalib) {
+                pendingCalib = false
+                showCalibrateDialog()
+            } else {
+                pendingCalib = false
+                setStatus(
+                    "Calibration needs the microphone too — the same one " +
+                    "permission, used only on this phone. Tap Calibrate to try again."
+                )
+            }
+            return
+        }
         if (requestCode != REQ_MIC) return
         val granted = grantResults.isNotEmpty() &&
             grantResults[0] == PackageManager.PERMISSION_GRANTED
@@ -290,24 +324,30 @@ class MainActivity : Activity() {
     }
 
     /** Built-in sound library: synthesized voices, loaded on the
-     *  selected pad — no recording needed. */
+     *  selected pad — no recording needed. Your own calibrated
+     *  voice stands at the head of the list (voice plan, stage 3). */
     private fun showSoundsDialog() {
         val padIndex = selectedPad
-        val names = Instruments.VOICES.map { it.name }.toTypedArray()
+        val names = (listOf("Your voice — a phrase in your own voice") +
+            Instruments.VOICES.map { it.name }).toTypedArray()
         AlertDialog.Builder(this)
-            .setTitle("Built-in sounds → pad ${padIndex + 1}\n(synthesized, in the character of)")
+            .setTitle("Sounds → pad ${padIndex + 1}\n(built-in ones are synthesized, in the character of)")
             .setItems(names) { _, which ->
-                val voice = Instruments.VOICES[which]
-                setStatus("Making the ${voice.name} sound…")
-                thread(name = "wovenoak-synth") {
-                    val data = Synth.renderPhrase(voice, LoopPad.SAMPLE_RATE)
-                    runOnUiThread {
-                        val pad = pads[padIndex]
-                        if (pad.state == LoopPad.State.RECORDING) {
-                            setStatus("Finish the current take first — tap the red pad to loop it.")
-                        } else {
-                            pad.loadPcm(data)
-                            setStatus("${voice.name} is looping on pad ${padIndex + 1}.")
+                if (which == 0) {
+                    loadVoicePhrase(padIndex)
+                } else {
+                    val voice = Instruments.VOICES[which - 1]
+                    setStatus("Making the ${voice.name} sound…")
+                    thread(name = "wovenoak-synth") {
+                        val data = Synth.renderPhrase(voice, LoopPad.SAMPLE_RATE)
+                        runOnUiThread {
+                            val pad = pads[padIndex]
+                            if (pad.state == LoopPad.State.RECORDING) {
+                                setStatus("Finish the current take first — tap the red pad to loop it.")
+                            } else {
+                                pad.loadPcm(data)
+                                setStatus("${voice.name} is looping on pad ${padIndex + 1}.")
+                            }
                         }
                     }
                 }
@@ -328,26 +368,338 @@ class MainActivity : Activity() {
             return
         }
         val voices = Instruments.melodicVoices()
-        val names = voices.map { it.name }.toTypedArray()
+        val names = (voices.map { it.name } + "Your voice — from your calibration").toTypedArray()
         AlertDialog.Builder(this)
             .setTitle("Play pad ${padIndex + 1}'s hum as…")
             .setItems(names) { _, which ->
-                val voice = voices[which]
-                setStatus("Turning your hum into ${voice.name}…")
-                thread(name = "wovenoak-hum") {
-                    val converted = HumConverter.convert(take, LoopPad.SAMPLE_RATE, voice)
-                    runOnUiThread {
-                        if (converted == null) {
-                            setStatus("Couldn't hear a clear melody in that take — try humming it a little slower and steadier.")
-                        } else {
-                            pad.loadPcm(converted)
-                            setStatus("Your hum, as ${voice.name}, is looping on pad ${padIndex + 1}.")
+                if (which == voices.size) {
+                    convertHumToVoice(padIndex, take)
+                } else {
+                    val voice = voices[which]
+                    setStatus("Turning your hum into ${voice.name}…")
+                    thread(name = "wovenoak-hum") {
+                        val converted = HumConverter.convert(take, LoopPad.SAMPLE_RATE, voice)
+                        runOnUiThread {
+                            if (converted == null) {
+                                setStatus("Couldn't hear a clear melody in that take — try humming it a little slower and steadier.")
+                            } else {
+                                pad.loadPcm(converted)
+                                setStatus("Your hum, as ${voice.name}, is looping on pad ${padIndex + 1}.")
+                            }
                         }
                     }
                 }
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    /** "Your voice" from the Sounds list: a short phrase sung by
+     *  the singer's own banked voice, loaded on the pad. */
+    private fun loadVoicePhrase(padIndex: Int) {
+        if (voiceBank.count() == 0) {
+            setStatus("No voice banked yet — tap 🎙 Calibrate… and teach the app your voice first.")
+            return
+        }
+        setStatus("Your voice is warming up…")
+        thread(name = "wovenoak-voice") {
+            val data = VoiceInstrument.renderPhrase(voiceBank, LoopPad.SAMPLE_RATE)
+            runOnUiThread {
+                val pad = pads[padIndex]
+                if (data == null) {
+                    setStatus("Your voice bank couldn't sing just now — try Calibrate once more.")
+                } else if (pad.state == LoopPad.State.RECORDING) {
+                    setStatus("Finish the current take first — tap the red pad to loop it.")
+                } else {
+                    pad.loadPcm(data)
+                    setStatus("That is your own voice, looping on pad ${padIndex + 1}.")
+                }
+            }
+        }
+    }
+
+    /** Hum → your own voice: the selected pad's hum, re-sung by
+     *  the calibration bank instead of a synthesized instrument. */
+    private fun convertHumToVoice(padIndex: Int, take: ShortArray) {
+        if (voiceBank.count() == 0) {
+            setStatus("No voice banked yet — tap 🎙 Calibrate… and teach the app your voice first.")
+            return
+        }
+        setStatus("Turning your hum into your own voice…")
+        thread(name = "wovenoak-humvoice") {
+            val converted = VoiceInstrument.convert(take, LoopPad.SAMPLE_RATE, voiceBank)
+            runOnUiThread {
+                if (converted == null) {
+                    setStatus("Your voice couldn't sing that melody — it may wander outside the notes you banked. Hum it slower, or Calibrate a wider range.")
+                } else {
+                    pads[padIndex].loadPcm(converted)
+                    setStatus("Your hum, sung back in your own voice, is looping on pad ${padIndex + 1}.")
+                }
+            }
+        }
+    }
+
+    /**
+     * Calibration (voice plan, stage 2 — Paul's design): the app
+     * sings first. A guide tone sounds; the singer sings the line
+     * back on a steady "ahh"; the range judge (Calibrate.kt)
+     * accepts the note only if it was really sung, on pitch, and
+     * held steady. The walk starts from a comfortable note, steps
+     * down to the bottom of the range, then up to the top. Every
+     * accepted note banks its steadiest second in the VoiceBank —
+     * on this phone only, under the one microphone permission.
+     */
+    private fun showCalibrateDialog() {
+        if (pads.any { it.state == LoopPad.State.RECORDING }) {
+            setStatus("Finish the take on the red pad first — then Calibrate can have the microphone.")
+            return
+        }
+        if (!hasMicPermission()) {
+            pendingCalib = true
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQ_MIC_CALIB)
+            return
+        }
+        val ctx = this
+        calibStage = CALIB_COMFORT
+        calibStart = -1
+        calibTarget = -1
+        calibTries = 0
+
+        val box = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 24, 48, 8)
+        }
+        val step = TextView(ctx).apply { textSize = 18f; setTypeface(typeface, Typeface.BOLD) }
+        val lyric = TextView(ctx).apply {
+            textSize = 16f
+            setPadding(0, 12, 0, 0)
+        }
+        val info = TextView(ctx).apply {
+            textSize = 14f
+            setPadding(0, 12, 0, 0)
+        }
+        val hear = Button(ctx).apply {
+            text = "▶  Hear the note"
+            setOnClickListener { playGuideTone() }
+        }
+        val sing = Button(ctx).apply {
+            text = "●  Sing it back"
+            setOnClickListener { onCalibSingTap() }
+        }
+        val erase = Button(ctx).apply {
+            text = "Forget my voice (erase the bank)"
+            setOnClickListener {
+                voiceBank.clear()
+                calibInfo?.text = "Voice bank erased. This phone has forgotten your voice — sing again any time."
+                setStatus("Voice bank erased.")
+            }
+        }
+        box.addView(step)
+        box.addView(lyric)
+        box.addView(hear)
+        box.addView(sing)
+        box.addView(info)
+        box.addView(erase)
+        calibStep = step
+        calibLyric = lyric
+        calibInfo = info
+        calibHearBtn = hear
+        calibSingBtn = sing
+
+        val dialog = AlertDialog.Builder(ctx)
+            .setTitle("🎙 Teach the app your voice")
+            .setView(box)
+            .setNegativeButton("Close", null)
+            .create()
+        dialog.setOnDismissListener {
+            calibAutoStop?.let { ui.removeCallbacks(it) }
+            calibAutoStop = null
+            calibCapture?.cancel()
+            calibCapture = null
+            TonePlayer.stop()
+            calibStep = null; calibLyric = null; calibInfo = null
+            calibHearBtn = null; calibSingBtn = null
+        }
+        dialog.show()
+        refreshCalibUi(
+            "First, sing any note that feels comfortable — a steady " +
+            "\"ahh\" for about two seconds. That is where the walk starts."
+        )
+    }
+
+    /** Repaint the calibration dialog for the current stage. */
+    private fun refreshCalibUi(message: String) {
+        val step = calibStep ?: return
+        calibLyric?.text = "\"${CALIB_LYRIC[calibLine % CALIB_LYRIC.size]}\""
+        when (calibStage) {
+            CALIB_COMFORT -> {
+                step.text = "Step 1 of 3 — your comfortable note"
+                calibHearBtn?.visibility = android.view.View.GONE
+            }
+            CALIB_DOWN -> {
+                step.text = "Step 2 of 3 — walking down · sing ${NoteNames.name(calibTarget, useFlats)}"
+                calibHearBtn?.visibility = android.view.View.VISIBLE
+            }
+            CALIB_UP -> {
+                step.text = "Step 3 of 3 — walking up · sing ${NoteNames.name(calibTarget, useFlats)}"
+                calibHearBtn?.visibility = android.view.View.VISIBLE
+            }
+            else -> {
+                step.text = "Your voice is in the bank"
+                calibHearBtn?.visibility = android.view.View.GONE
+            }
+        }
+        val banked = voiceBank.count()
+        val bankLine = if (banked == 0) {
+            "Nothing banked yet."
+        } else {
+            "Banked so far: $banked note${if (banked == 1) "" else "s"}, " +
+                "${NoteNames.name(voiceBank.low()!!, useFlats)} – " +
+                "${NoteNames.name(voiceBank.high()!!, useFlats)}."
+        }
+        calibInfo?.text = "$message\n\n$bankLine"
+    }
+
+    /** The guide tone: a soft flute-ish synth note at the target. */
+    private fun playGuideTone() {
+        val target = if (calibStage == CALIB_DOWN || calibStage == CALIB_UP) calibTarget else -1
+        if (target < 0) return
+        val voice = Instruments.melodicVoices().firstOrNull { it.name == "Flute" }
+            ?: Instruments.melodicVoices().first()
+        thread(name = "wovenoak-guide") {
+            val tone = Synth.renderNote(voice, Instruments.midiToFreq(target), 1.4f, LoopPad.SAMPLE_RATE)
+            runOnUiThread { TonePlayer.play(tone) }
+        }
+    }
+
+    private fun onCalibSingTap() {
+        val cap = calibCapture
+        if (cap != null && cap.isCapturing) {
+            finishCalibTake()
+            return
+        }
+        val fresh = CalibCapture()
+        if (!fresh.start()) {
+            setStatus("The microphone could not be opened just now — try Calibrate again.")
+            return
+        }
+        calibCapture = fresh
+        calibSingBtn?.text = "■  Done"
+        calibHearBtn?.isEnabled = false
+        calibInfo?.text = "Listening… sing the line on a steady \"ahh\", then tap Done."
+        val auto = Runnable { if (calibCapture?.isCapturing == true) finishCalibTake() }
+        calibAutoStop = auto
+        ui.postDelayed(auto, 4000)
+    }
+
+    /** Judge the finished take and advance the walk. */
+    private fun finishCalibTake() {
+        calibAutoStop?.let { ui.removeCallbacks(it) }
+        calibAutoStop = null
+        val cap = calibCapture ?: return
+        calibCapture = null
+        calibSingBtn?.text = "●  Sing it back"
+        calibHearBtn?.isEnabled = true
+        val take = cap.stop()
+        calibInfo?.text = "Listening to what you sang…"
+        val stage = calibStage
+        val target = calibTarget
+        thread(name = "wovenoak-judge") {
+            val sr = LoopPad.SAMPLE_RATE
+            var message = ""
+            var nextStage = stage
+            var nextTarget = target
+            when (stage) {
+                CALIB_COMFORT -> {
+                    val note = Calibrate.comfortableNote(take, sr)
+                    if (note == null) {
+                        message = "Couldn't hear a steady note there — sing one comfortable " +
+                            "\"ahh\", a little louder, and hold it."
+                    } else {
+                        voiceBank.save(note, Calibrate.steadiestSecond(take, sr))
+                        calibStart = note
+                        nextStage = CALIB_DOWN
+                        nextTarget = note - 1
+                        calibTries = 0
+                        calibLine++
+                        message = "Got it — ${NoteNames.name(note, useFlats)} is home base, and " +
+                            "it's banked. Now we walk down: hear each note, sing it back."
+                    }
+                }
+                CALIB_DOWN, CALIB_UP -> {
+                    val v = Calibrate.judge(take, sr, target)
+                    if (v.accepted) {
+                        voiceBank.save(target, Calibrate.steadiestSecond(take, sr))
+                        calibTries = 0
+                        calibLine++
+                        if (stage == CALIB_DOWN) {
+                            message = "${NoteNames.name(target, useFlats)} banked. One step lower…"
+                            nextTarget = target - 1
+                            if (calibStart - nextTarget > 24 || nextTarget < 30) {
+                                nextStage = CALIB_UP
+                                nextTarget = calibStart + 1
+                                message = "${NoteNames.name(target, useFlats)} banked — that's the " +
+                                    "bottom for today. Now we walk up."
+                            }
+                        } else {
+                            message = "${NoteNames.name(target, useFlats)} banked. One step higher…"
+                            nextTarget = target + 1
+                            if (nextTarget - calibStart > 24 || nextTarget > 96) {
+                                nextStage = CALIB_DONE
+                                message = "That's the top. The walk is done."
+                            }
+                        }
+                    } else {
+                        calibTries++
+                        val why = when {
+                            v.voicedRatio < 0.5f -> "I mostly heard quiet — sing out a bit more."
+                            kotlin.math.abs(v.centsOff) > 50f ->
+                                "You landed ${if (v.centsOff > 0) "above" else "below"} " +
+                                    "${NoteNames.name(target, useFlats)} — hear the note again and aim for its middle."
+                            else -> "The note wandered — hold it as steady as you can."
+                        }
+                        if (calibTries >= 2) {
+                            calibTries = 0
+                            calibLine++
+                            if (stage == CALIB_DOWN) {
+                                nextStage = CALIB_UP
+                                nextTarget = calibStart + 1
+                                message = "$why That seems to be the bottom of your range — " +
+                                    "nothing wrong with that. Now we walk up."
+                            } else {
+                                nextStage = CALIB_DONE
+                                message = "$why That seems to be the top of your range. The walk is done."
+                            }
+                        } else {
+                            message = "$why One more try at ${NoteNames.name(target, useFlats)}."
+                        }
+                    }
+                }
+                else -> message = "The walk is done — close this and try your voice under Sounds… or Hum → instrument…"
+            }
+            val doneStage = nextStage
+            val doneTarget = nextTarget
+            runOnUiThread {
+                calibStage = doneStage
+                calibTarget = doneTarget
+                if (doneStage == CALIB_DONE) {
+                    val low = voiceBank.low()
+                    val high = voiceBank.high()
+                    val summary = if (low != null && high != null) {
+                        "Your range: ${NoteNames.name(low, useFlats)} – " +
+                            "${NoteNames.name(high, useFlats)} · ${voiceBank.count()} notes banked. " +
+                            "Find your voice at the top of Sounds…, and under " +
+                            "Hum → instrument… — it never leaves this phone."
+                    } else {
+                        "No notes were banked this time — sing the walk again whenever you're ready."
+                    }
+                    refreshCalibUi("$message\n$summary")
+                    setStatus(summary)
+                } else {
+                    refreshCalibUi(message)
+                }
+            }
+        }
     }
 
     /**
@@ -687,6 +1039,9 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         ui.removeCallbacks(ticker)
+        calibAutoStop?.let { ui.removeCallbacks(it) }
+        calibCapture?.cancel()
+        TonePlayer.stop()
         pads.forEach { it.release() }
         super.onDestroy()
     }
@@ -694,5 +1049,25 @@ class MainActivity : Activity() {
     companion object {
         private const val REQ_MIC = 1001
         private const val REQ_EXPORT = 1002
+        private const val REQ_MIC_CALIB = 1003
+
+        private const val CALIB_COMFORT = 0
+        private const val CALIB_DOWN = 1
+        private const val CALIB_UP = 2
+        private const val CALIB_DONE = 3
+
+        /** The calibration lyric — an original song written for
+         *  this walk; one line per note, sung on a steady "ahh"
+         *  or with its words, as the singer likes. */
+        private val CALIB_LYRIC = arrayOf(
+            "Oh, the oak stands over the water",
+            "Sing it low, sing it slow",
+            "Down the green and shadowed hollow",
+            "Where the hidden rivers flow",
+            "Up the hill the morning's climbing",
+            "Sing it bright, sing it true",
+            "Every note my voice can carry",
+            "I will sing them home to you"
+        )
     }
 }

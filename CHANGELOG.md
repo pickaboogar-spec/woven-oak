@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.1.0-beta.9 — 2026-11-07
+
+- **Calibrate — voice plan stage 2 ships, and stage 3's
+  playable half with it.** A new **🎙 Calibrate…** button runs
+  Paul's calibration walk: sing a comfortable note, then follow
+  guide tones down and up your range, one semitone at a time,
+  singing a line of an original calibration lyric on a steady
+  "ahh" for each. The range judge (`Calibrate.kt`, written
+  earlier and verified line-by-line for this release) banks a
+  note only when the take is voiced, within half a semitone,
+  and steady — and keeps the steadiest second of it in the
+  on-device **VoiceBank** (raw PCM in app-private files, one
+  per note; the microphone remains the app's only permission).
+- **Your voice is an instrument now.** Sounds… leads with
+  "Your voice — a phrase in your own voice," and Hum →
+  instrument… can re-sing a hummed melody in your banked
+  voice. Notes are rendered from the nearest banked sample,
+  loop-extended and shifted with a new WSOLA pitch shifter
+  (`VoicePlay.kt`). Typed words sung in your voice remain
+  stage 4 — deliberately not claimed, not shipped.
+- **The check suite is in the repo now** (`tests/`): 33
+  automated checks over the judge, the bank, the shifter
+  (every semitone −12…+12, measured two independent ways),
+  conversion, and phrase rendering — all passing. Three
+  shifter constructions failed those checks before WSOLA
+  passed them; the failures are documented in the code.
+- Per the release policy, beta.7 retires with this release:
+  beta.9 (current) and beta.8 (fallback) are the two live
+  versions.
+
 ## 0.1.0-beta.8 — 2026-11-07
 
 - **The beauty pass.** Paul's brief: "make it look like

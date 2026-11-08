@@ -66,3 +66,23 @@ hand, not promised in advance.
 3. "Your voice" instrument + note-phrase rendering.
 Each stage ships as its own beta and gets Paul's ears on it
 before the next begins.
+
+### Status (2026-11-07, beta.9)
+- Stage 1 shipped in beta.7.
+- Stage 2 SHIPPED in beta.9: the walk is a dialog flow in
+  MainActivity (guide tones from `Synth` via `TonePlayer`,
+  takes via `CalibCapture`, judging by `Calibrate.kt`,
+  storage by `VoiceBank.kt`). One design note: the walk sings
+  an original calibration lyric line per note, on "ahh" — the
+  lyric from VOICE-DESIGN stage 2, kept singable and simple.
+- Stage 3's playable half SHIPPED in beta.9: "Your voice" in
+  Sounds… (phrase rendering) and in Hum → instrument…
+  (melody conversion), both in `VoicePlay.kt`, shifting with
+  a WSOLA shifter built for this — Retune's granular shifter
+  works on a correction curve inside a sung take and was not
+  reused for free-standing notes. Note-phrase rendering onto
+  the chant grid and chorus/bridge composition remain open.
+- Stage 4 remains the horizon, exactly as written above.
+- Verification: `tests/` holds the 33-check suite (judge,
+  bank, shifter at every semitone −12…+12 by tracker and by
+  zero-crossing, conversion, phrase) — all passing for beta.9.
