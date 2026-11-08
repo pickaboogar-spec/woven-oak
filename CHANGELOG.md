@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.0-beta.3 — 2026-11-07
+
+- **Chant mode — the first music-creation template.** Built from
+  Paul's CHANT-TEMPLATE design the same evening he drew it up:
+  imitate the *mechanism* of the classic robot-chant records —
+  a steady electronic pulse, a processed voice chanting short
+  phrases one to a beat — while every word stays the user's own.
+  Record phrases onto pads, tap **🤖 Chant…**, choose a tempo
+  (90–140 BPM), an anchor pad whose phrase lands every four
+  beats as the refrain, the synthesized pulse and the
+  ring-modulated robot voice, and the app renders one chanting
+  loop: first pass runs half the phrases, second pass runs them
+  all. Stop all stops the chant too. The template ships empty;
+  there is no preset lyric sheet and no borrowed hook.
+
 ## 0.1.0-beta.2 — 2026-11-07
 
 First field fixes, from the first real phone test (Paul, Moto G,

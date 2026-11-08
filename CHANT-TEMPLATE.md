@@ -1,5 +1,8 @@
 # The Chant Template — design note (Paul, 2026-11-07)
 
+**Status: SHIPPED in v0.1.0-beta.3, the same evening.** What
+follows is the design as drawn up before the build.
+
 Paul's idea, in his framing: imitate **the way** a certain famous
 robot-chant record works — never its music, never its words. What
 that record proved is a *mechanism*: a driving electronic pulse, a

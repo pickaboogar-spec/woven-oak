@@ -24,6 +24,9 @@ import android.os.Looper
 import android.view.WindowManager
 import android.view.animation.LinearInterpolator
 import android.widget.Button
+import android.widget.CheckBox
+import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.TextView
 import kotlin.concurrent.thread
 
@@ -54,6 +57,8 @@ class MainActivity : Activity() {
     private lateinit var centsMeter: CentsMeterView
     private val buttons = arrayOfNulls<Button>(6)
     private val toggles = arrayOfNulls<Button>(6)
+    /** The rendered chant lives on its own invisible pad. */
+    private val chantPad = LoopPad(6) { }
     private val animators = arrayOfNulls<ValueAnimator>(6)
     private val pads = ArrayList<LoopPad>()
 
@@ -130,10 +135,12 @@ class MainActivity : Activity() {
         }
         findViewById<Button>(R.id.stopAll).setOnClickListener {
             pads.forEach { if (it.state == LoopPad.State.PLAYING) it.stopPlayback() }
+            if (chantPad.state == LoopPad.State.PLAYING) chantPad.stopPlayback()
         }
         findViewById<Button>(R.id.soundsBtn).setOnClickListener { showSoundsDialog() }
         findViewById<Button>(R.id.humBtn).setOnClickListener { showHumDialog() }
         findViewById<Button>(R.id.exportBtn).setOnClickListener { exportLoop() }
+        findViewById<Button>(R.id.chantBtn).setOnClickListener { showChantDialog() }
         findViewById<Button>(R.id.flatsToggle).setOnClickListener { v ->
             useFlats = !useFlats
             (v as Button).text = if (useFlats) "♭" else "♯"
@@ -338,6 +345,93 @@ class MainActivity : Activity() {
      */
     private var pendingWav: ByteArray? = null
     private var pendingWavPad: Int = -1
+
+    /** The Chant template (Paul's design, CHANT-TEMPLATE.md): pour
+     *  your own words into the machine — pick a tempo, an anchor pad
+     *  whose phrase lands every four beats as the refrain, the
+     *  electronic pulse and the robot voice — and your pads render
+     *  into one chanting loop. The template ships empty; every word
+     *  in it is yours. */
+    private fun showChantDialog() {
+        var bpm = 120
+        var anchorIdx = -1
+        val ctx = this
+        val box = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 24, 48, 8)
+        }
+        val tempoLabel = TextView(ctx).apply {
+            text = "Tempo: $bpm BPM"
+            textSize = 16f
+        }
+        val tempo = SeekBar(ctx).apply {
+            max = 50 // 90..140 BPM
+            progress = bpm - 90
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
+                    bpm = p + 90
+                    tempoLabel.text = "Tempo: $bpm BPM"
+                }
+                override fun onStartTrackingTouch(s: SeekBar?) {}
+                override fun onStopTrackingTouch(s: SeekBar?) {}
+            })
+        }
+        val anchorBtn = Button(ctx).apply {
+            text = "Anchor (refrain): none"
+            setOnClickListener {
+                anchorIdx = if (anchorIdx >= 5) -1 else anchorIdx + 1
+                text = if (anchorIdx < 0) "Anchor (refrain): none"
+                       else "Anchor (refrain): pad ${anchorIdx + 1}"
+            }
+        }
+        val pulseBox = CheckBox(ctx).apply {
+            text = "Electronic pulse"
+            isChecked = true
+        }
+        val robotBox = CheckBox(ctx).apply {
+            text = "Robot voice"
+            isChecked = true
+        }
+        box.addView(tempoLabel)
+        box.addView(tempo)
+        box.addView(anchorBtn)
+        box.addView(pulseBox)
+        box.addView(robotBox)
+
+        AlertDialog.Builder(ctx)
+            .setTitle("Build a chant from your pads")
+            .setView(box)
+            .setPositiveButton("Build & play") { _, _ ->
+                val anchorPcm = if (anchorIdx >= 0) pads.getOrNull(anchorIdx)?.pcm else null
+                val phrases = pads
+                    .filterIndexed { i, p ->
+                        p.pcm != null && p.state != LoopPad.State.RECORDING && i != anchorIdx
+                    }
+                    .map { it.pcm!! }
+                if (phrases.size < 2) {
+                    setStatus("The chant needs your words — record at least two pads first.")
+                    return@setPositiveButton
+                }
+                setStatus("Building your chant…")
+                thread(name = "wovenoak-chant") {
+                    val rendered = ChantRenderer.render(
+                        phrases, anchorPcm, bpm, pulseBox.isChecked, robotBox.isChecked
+                    )
+                    runOnUiThread {
+                        chantPad.loadPcm(rendered)
+                        setStatus(
+                            "Your chant is playing: ${phrases.size} phrases at $bpm BPM" +
+                            if (anchorPcm != null) ", pad ${anchorIdx + 1} as the refrain." else "."
+                        )
+                    }
+                }
+            }
+            .setNeutralButton("Stop chant") { _, _ ->
+                if (chantPad.state == LoopPad.State.PLAYING) chantPad.stopPlayback()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
 
     private fun exportLoop() {
         val padIndex = selectedPad
