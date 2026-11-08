@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.0-beta.6 — 2026-11-07
+
+- **The instructions are back ON the pads — and they fit.**
+  Paul's word, after a night with both versions: people need to
+  read how to drive a pad right on the pad. So each pad now
+  shows its number big, then *"Tap to record · tap to stop /
+  Hold to clear"* in small type, sized and spaced to sit whole
+  inside the pad — the beta.4 labels clipped, the beta.5
+  numbers-only pads told you nothing; this is the middle Paul
+  actually asked for twice. State still reads from color, the
+  breathing pulse, and the play-together row.
+- Per the release policy, beta.4 retires with this release:
+  beta.6 (current) and beta.5 (fallback) are the two live
+  versions.
+
 ## 0.1.0-beta.5 — 2026-11-07
 
 Two fixes from Paul's first hands-on with beta.4:

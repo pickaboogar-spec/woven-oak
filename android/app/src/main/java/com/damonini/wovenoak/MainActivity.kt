@@ -23,6 +23,11 @@ import android.os.Handler
 import android.os.Looper
 import android.view.WindowManager
 import android.view.animation.LinearInterpolator
+import android.graphics.Typeface
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.RelativeSizeSpan
+import android.text.style.StyleSpan
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.LinearLayout
@@ -111,9 +116,12 @@ class MainActivity : Activity() {
             pads.add(LoopPad(i) { runOnUiThread { renderPad(idx) } })
             val b = findViewById<Button>(padIds[i])
             buttons[i] = b
-            // Pads carry their number and nothing else (Paul's
-            // direction, beta.5) — so the number goes big.
-            b.textSize = 38f
+            // Pad labels (Paul, beta.6): a big number, then the
+            // three instructions in small type — sized to FIT the
+            // pad, after the beta.4 labels clipped and the beta.5
+            // numbers-only pads left people guessing.
+            b.textSize = 13f
+            b.includeFontPadding = false
             b.setOnClickListener { onPadTap(idx) }
             b.setOnLongClickListener {
                 selectedPad = idx
@@ -522,6 +530,18 @@ class MainActivity : Activity() {
         }
     }
 
+    /** What every pad says (Paul, beta.6): the number, big, then
+     *  how to drive it — tap to record, tap to stop, hold to
+     *  clear — small enough to fit the pad whole. State still
+     *  reads from the colors, the pulse, and the toggle row. */
+    private fun padLabel(n: Int): CharSequence {
+        val text = "$n\nTap to record · tap to stop\nHold to clear"
+        val span = SpannableString(text)
+        span.setSpan(RelativeSizeSpan(2.3f), 0, "$n".length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        span.setSpan(StyleSpan(Typeface.BOLD), 0, "$n".length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        return span
+    }
+
     private fun renderPad(i: Int) {
         renderToggle(i)
         val pad = pads[i]
@@ -531,23 +551,23 @@ class MainActivity : Activity() {
             LoopPad.State.EMPTY -> {
                 stopPulse(i)
                 b.backgroundTintList = ColorStateList.valueOf(dimTints[i])
-                b.text = "$n"
+                b.text = padLabel(n)
             }
             LoopPad.State.RECORDING -> {
                 stopPulse(i)
                 b.backgroundTintList = ColorStateList.valueOf(recordingTint)
                 val secs = (System.currentTimeMillis() - pad.recordStartedAtMs) / 1000.0
-                b.text = "$n"
+                b.text = padLabel(n)
             }
             LoopPad.State.PLAYING -> {
                 b.backgroundTintList = ColorStateList.valueOf(playTints[i])
-                b.text = "$n"
+                b.text = padLabel(n)
                 startPulse(i, pad.durationSec)
             }
             LoopPad.State.READY -> {
                 stopPulse(i)
                 b.backgroundTintList = ColorStateList.valueOf(readyTints[i])
-                b.text = "$n"
+                b.text = padLabel(n)
             }
         }
     }
