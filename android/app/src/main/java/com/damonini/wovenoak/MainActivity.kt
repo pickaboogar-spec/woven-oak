@@ -111,6 +111,9 @@ class MainActivity : Activity() {
             pads.add(LoopPad(i) { runOnUiThread { renderPad(idx) } })
             val b = findViewById<Button>(padIds[i])
             buttons[i] = b
+            // Pads carry their number and nothing else (Paul's
+            // direction, beta.5) — so the number goes big.
+            b.textSize = 38f
             b.setOnClickListener { onPadTap(idx) }
             b.setOnLongClickListener {
                 selectedPad = idx
@@ -422,22 +425,37 @@ class MainActivity : Activity() {
                     }
                     .map { it.pcm!! }
                 if (phrases.size < 2) {
-                    setStatus("The chant needs your words — record at least two pads first.")
+                    setStatus(
+                        "The chant is built from your recorded pads — it needs at least " +
+                        "two, and right now ${phrases.size} ${if (phrases.size == 1) "pad has" else "pads have"} " +
+                        "a phrase on it. Record a couple of pads, then build."
+                    )
                     return@setPositiveButton
                 }
                 setStatus("Building your chant…")
                 thread(name = "wovenoak-chant") {
-                    val rendered = ChantRenderer.render(
-                        phrases, anchorPcm, bpm, style,
-                        pulseBox.isChecked, robotBox.isChecked
-                    )
-                    runOnUiThread {
-                        chantPad.loadPcm(rendered)
-                        setStatus(
-                            "Your chant is playing: ${style.label}, ${phrases.size} phrases " +
-                            "fitted to $bpm BPM" +
-                            if (anchorPcm != null) ", pad ${anchorIdx + 1} as the refrain." else "."
+                    try {
+                        val rendered = ChantRenderer.render(
+                            phrases, anchorPcm, bpm, style,
+                            pulseBox.isChecked, robotBox.isChecked
                         )
+                        runOnUiThread {
+                            // The chant stands alone: quiet the pads
+                            // so what you hear is the chant itself.
+                            pads.forEach {
+                                if (it.state == LoopPad.State.PLAYING) it.stopPlayback()
+                            }
+                            chantPad.loadPcm(rendered)
+                            setStatus(
+                                "Your chant is playing: ${style.label}, ${phrases.size} phrases " +
+                                "fitted to $bpm BPM" +
+                                if (anchorPcm != null) ", pad ${anchorIdx + 1} as the refrain." else "."
+                            )
+                        }
+                    } catch (e: Exception) {
+                        runOnUiThread {
+                            setStatus("The chant would not build on this phone — tell Pepper what the status line said before.")
+                        }
                     }
                 }
             }
@@ -513,23 +531,23 @@ class MainActivity : Activity() {
             LoopPad.State.EMPTY -> {
                 stopPulse(i)
                 b.backgroundTintList = ColorStateList.valueOf(dimTints[i])
-                b.text = "$n\nTap to record"
+                b.text = "$n"
             }
             LoopPad.State.RECORDING -> {
                 stopPulse(i)
                 b.backgroundTintList = ColorStateList.valueOf(recordingTint)
                 val secs = (System.currentTimeMillis() - pad.recordStartedAtMs) / 1000.0
-                b.text = "$n\n● Recording %.1fs\nTap to loop it".format(secs)
+                b.text = "$n"
             }
             LoopPad.State.PLAYING -> {
                 b.backgroundTintList = ColorStateList.valueOf(playTints[i])
-                b.text = "$n\n▶ Looping ${fmt(pad.durationSec)}\nTap to stop · hold to clear"
+                b.text = "$n"
                 startPulse(i, pad.durationSec)
             }
             LoopPad.State.READY -> {
                 stopPulse(i)
                 b.backgroundTintList = ColorStateList.valueOf(readyTints[i])
-                b.text = "$n\n❚❚ Loop ready ${fmt(pad.durationSec)}\nTap to play · hold to clear"
+                b.text = "$n"
             }
         }
     }

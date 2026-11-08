@@ -58,7 +58,12 @@ object ChantRenderer {
         treated: Boolean
     ): ShortArray {
         val beat = LoopPad.SAMPLE_RATE * 60 / bpm.coerceIn(60, 200)
-        val beatsPerBar = 16
+        // Two 8-beat passes (half the phrases, then all of them).
+        // Kept to 16 beats total so the rendered buffer is the
+        // size of an ordinary pad take — the first field test
+        // (beta.4) suggested a 32-beat buffer may be more than
+        // some phones will loop as a static track.
+        val beatsPerBar = 8
         val totalBeats = beatsPerBar * 2
         val total = beat * totalBeats
         val mix = FloatArray(total)

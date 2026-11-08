@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.1.0-beta.5 — 2026-11-07
+
+Two fixes from Paul's first hands-on with beta.4:
+
+- **Pads are numbers now.** The pads carried two or three lines
+  of state text under the number, and on Paul's phone the bottom
+  line was cut off. At his direction the pads show just **1–6**,
+  big. State is still visible at a glance — the colors, the
+  breathing pulse on a playing pad, and the numbered
+  play-together row all still speak.
+- **Chant mode, hardened.** On Paul's phone "Build & play"
+  appeared to do nothing. Three changes: the rendered chant is
+  half the length (16 beats — the size of an ordinary pad take,
+  which phones loop reliably); building a chant now stops the
+  six pads first so the chant is heard on its own, unmistakably;
+  and if there aren't two recorded pads to build from, the
+  status line now says exactly how many it found.
+
+Also this cycle: **beta.1 was retired from GitHub** (release,
+file and tag removed at Paul's direction). Its one-off signing
+key is gone, so it could never update cleanly; everything from
+beta.2 onward shares the kept key and installs over the top.
+
 ## 0.1.0-beta.4 — 2026-11-07
 
 Two more of Paul's rules, set during the beta.3 field test:
