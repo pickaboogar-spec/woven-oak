@@ -152,6 +152,7 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.humBtn).setOnClickListener { showHumDialog() }
         findViewById<Button>(R.id.exportBtn).setOnClickListener { exportLoop() }
         findViewById<Button>(R.id.chantBtn).setOnClickListener { showChantDialog() }
+        findViewById<Button>(R.id.retuneBtn).setOnClickListener { showRetuneDialog() }
         findViewById<Button>(R.id.flatsToggle).setOnClickListener { v ->
             useFlats = !useFlats
             (v as Button).text = if (useFlats) "♭" else "♯"
@@ -356,6 +357,92 @@ class MainActivity : Activity() {
      */
     private var pendingWav: ByteArray? = null
     private var pendingWavPad: Int = -1
+
+    /** Retune (voice plan, stage 1): correct the selected pad's
+     *  singing to a scale — the Auto-Tune mechanism, offline, with
+     *  the singer holding the dial. Always renders from the pad's
+     *  original take, so it can be re-done at any strength. */
+    private fun showRetuneDialog() {
+        val padIndex = selectedPad
+        val pad = pads[padIndex]
+        val source = pad.rawTake ?: pad.pcm
+        if (source == null) {
+            setStatus("Sing into pad ${padIndex + 1} first — then Retune can correct it.")
+            return
+        }
+        val keyNames = arrayOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
+        var rootPc = 0
+        var scaleIdx = 0
+        var strengthPct = 80
+        val ctx = this
+        val box = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 24, 48, 8)
+        }
+        val keyBtn = Button(ctx).apply {
+            text = "Key: C"
+            setOnClickListener {
+                rootPc = (rootPc + 1) % 12
+                text = "Key: ${keyNames[rootPc]}"
+            }
+        }
+        val scaleBtn = Button(ctx).apply {
+            text = "Scale: ${Retune.SCALES[0].first}"
+            setOnClickListener {
+                scaleIdx = (scaleIdx + 1) % Retune.SCALES.size
+                text = "Scale: ${Retune.SCALES[scaleIdx].first}"
+            }
+        }
+        val strengthLabel = TextView(ctx).apply {
+            text = "Strength: $strengthPct%"
+            textSize = 16f
+        }
+        val strengthBar = SeekBar(ctx).apply {
+            max = 100
+            progress = strengthPct
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
+                    strengthPct = p
+                    strengthLabel.text = "Strength: $p%"
+                }
+                override fun onStartTrackingTouch(s: SeekBar?) {}
+                override fun onStopTrackingTouch(s: SeekBar?) {}
+            })
+        }
+        box.addView(keyBtn)
+        box.addView(scaleBtn)
+        box.addView(strengthLabel)
+        box.addView(strengthBar)
+
+        AlertDialog.Builder(ctx)
+            .setTitle("Retune pad ${padIndex + 1}")
+            .setView(box)
+            .setPositiveButton("Retune it") { _, _ ->
+                setStatus("Retuning pad ${padIndex + 1}…")
+                thread(name = "wovenoak-retune") {
+                    val out = try {
+                        Retune.retune(
+                            source, rootPc, Retune.SCALES[scaleIdx].second,
+                            strengthPct / 100f
+                        )
+                    } catch (e: Exception) { null }
+                    runOnUiThread {
+                        if (out == null) {
+                            setStatus("Retune would not run on that take — tell Pepper.")
+                        } else {
+                            pad.loadPcm(out)
+                            setStatus(
+                                "Pad ${padIndex + 1} retuned to ${keyNames[rootPc]} " +
+                                "${Retune.SCALES[scaleIdx].first} at $strengthPct% — " +
+                                "re-record or re-run any time; it always starts from your original take."
+                            )
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
 
     /** The Chant template (Paul's design, CHANT-TEMPLATE.md): pour
      *  your own words into the machine — pick a tempo, an anchor pad

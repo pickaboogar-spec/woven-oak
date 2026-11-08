@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.0-beta.7 — 2026-11-07
+
+- **Retune — stage 1 of the voice plan ships.** A new
+  **🎯 Retune…** button corrects the selected pad's singing to
+  a scale, the way the famous pitch-correction tools do it,
+  but offline and with the singer holding the dial: pick a key
+  (C through B), a scale (Major, Minor, or Chromatic), and a
+  strength from a gentle nudge to a full snap. The app's own
+  pitch tracker reads the take frame by frame, and a granular
+  pitch shifter re-renders it at the corrected pitch. It always
+  starts from your original take, so you can re-run it at any
+  strength — the natural take is never lost. Stages 2 and 3 of
+  the plan (calibration, your voice as an instrument) build on
+  this shifter.
+- Per the release policy, beta.5 retires with this release:
+  beta.7 (current) and beta.6 (fallback) are the two live
+  versions.
+
 ## 0.1.0-beta.6 — 2026-11-07
 
 - **The instructions are back ON the pads — and they fit.**
