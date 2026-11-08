@@ -3,6 +3,19 @@
 **Status: ROUGH BETA** (v0.1.0-beta.1) — this is a rough beta: expect
 rough edges. Feedback welcome.
 
+## Testers wanted
+
+This beta was built and checked on one setup. Android phones vary —
+just because it works on our hardware doesn't mean it will work on
+everybody's hardware, and outside opinions are how it gets better.
+If you try it, please open an Issue and tell us:
+
+- your phone model,
+- your Android version,
+- what worked — or what broke.
+
+Thank you for testing.
+
 **A truly electronic acapella instrument.** Six pads. Sing, hum,
 beatbox or clap a short phrase into a pad and it loops — layer the six
 pads and you are your own choir, band and rhythm section.
