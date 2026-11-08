@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.0-beta.4 — 2026-11-07
+
+Two more of Paul's rules, set during the beta.3 field test:
+
+- **The words now fit the music.** In beta.3 a phrase started on
+  its beat but kept its natural length — long phrases spilled,
+  short ones left gaps. Now every phrase is digitally stretched
+  or squeezed to exactly one beat before it is placed, anchor
+  included. The grid wins; nobody's pace survives.
+- **Four instrumental styles**, described rather than named for
+  any artist, each a pulse-and-voice recipe the user pours their
+  own words into: **Robot Chant** (four-on-the-floor pulse,
+  ring-modulated voice, 120 BPM), **Acid House** (driving kick
+  plus a squelchy synthesized bass arp, 124), **Industrial
+  Drive** (driven kicks, metallic hits, a low drone, crushed
+  voice, 100), **Dark Synth** (kick-and-snare groove with a
+  pulsing bass, voice left clean, 105). Pick from the Chant
+  dialog; the tempo follows the style until you move it.
+
 ## 0.1.0-beta.3 — 2026-11-07
 
 - **Chant mode — the first music-creation template.** Built from

@@ -355,6 +355,7 @@ class MainActivity : Activity() {
     private fun showChantDialog() {
         var bpm = 120
         var anchorIdx = -1
+        var style = ChantRenderer.Style.ROBOT
         val ctx = this
         val box = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
@@ -376,6 +377,17 @@ class MainActivity : Activity() {
                 override fun onStopTrackingTouch(s: SeekBar?) {}
             })
         }
+        val styleBtn = Button(ctx).apply {
+            text = "Style: ${style.label}"
+            setOnClickListener {
+                val all = ChantRenderer.Style.values()
+                style = all[(style.ordinal + 1) % all.size]
+                text = "Style: ${style.label}"
+                bpm = style.defaultBpm
+                tempo.progress = (bpm - 90).coerceIn(0, 50)
+                tempoLabel.text = "Tempo: $bpm BPM"
+            }
+        }
         val anchorBtn = Button(ctx).apply {
             text = "Anchor (refrain): none"
             setOnClickListener {
@@ -389,9 +401,10 @@ class MainActivity : Activity() {
             isChecked = true
         }
         val robotBox = CheckBox(ctx).apply {
-            text = "Robot voice"
+            text = "Voice treatment (the style's own)"
             isChecked = true
         }
+        box.addView(styleBtn)
         box.addView(tempoLabel)
         box.addView(tempo)
         box.addView(anchorBtn)
@@ -415,12 +428,14 @@ class MainActivity : Activity() {
                 setStatus("Building your chant…")
                 thread(name = "wovenoak-chant") {
                     val rendered = ChantRenderer.render(
-                        phrases, anchorPcm, bpm, pulseBox.isChecked, robotBox.isChecked
+                        phrases, anchorPcm, bpm, style,
+                        pulseBox.isChecked, robotBox.isChecked
                     )
                     runOnUiThread {
                         chantPad.loadPcm(rendered)
                         setStatus(
-                            "Your chant is playing: ${phrases.size} phrases at $bpm BPM" +
+                            "Your chant is playing: ${style.label}, ${phrases.size} phrases " +
+                            "fitted to $bpm BPM" +
                             if (anchorPcm != null) ", pad ${anchorIdx + 1} as the refrain." else "."
                         )
                     }
