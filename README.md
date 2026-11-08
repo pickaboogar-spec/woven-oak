@@ -28,6 +28,16 @@ Free forever. No paywall, no accounts, no telemetry, no ads.
 Your recordings are made and played entirely on your own device —
 nothing is ever uploaded anywhere.
 
+**Permissions (current version, beta.10):** exactly two. The
+**microphone**, only to record your loops on the device. And
+**internet**, used for exactly one thing: on launch, one small
+request to GitHub asking whether a newer Woven Oak has been
+published, so the app can offer you the update. That check is
+the app's only network use — no analytics, no telemetry, no
+other endpoints — and everything else in the app works fully
+offline. (Versions through beta.9 asked for the microphone
+only.)
+
 ## The app (Android)
 
 Woven Oak is a native Android app: [`android/`](android/) in this

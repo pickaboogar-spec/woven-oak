@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.1.0-beta.10 — 2026-11-07
+
+- **The update notifier (Paul's direction).** On launch — and
+  only on launch — the app makes one small request to GitHub's
+  public latest-release endpoint for this repo and compares it
+  with its own version (read from the app package, never a
+  hardcoded string). If a newer release exists, a dialog names
+  it and asks "Do you wish to update?": **Update** opens the
+  release's APK asset in the browser (Android's installer takes
+  it from there; no silent installs), **Later** dismisses until
+  the next launch. No background polling, no services, no push.
+  Offline or any failure: silent — the app just opens.
+  (`UpdateCheck.kt`, pure logic split from the one fetch so the
+  suite can test it.)
+- **Permission change, stated plainly:** the manifest gains
+  INTERNET — the app's second permission after RECORD_AUDIO —
+  used solely for that check. No ACCESS_NETWORK_STATE (not
+  needed; offline fails silent by design). The update check is
+  the only network use in the app: no analytics, no telemetry,
+  no other endpoints. Everything else still works fully
+  offline. The header version label is now read from the app
+  itself at runtime instead of being baked into the layout.
+- **Checks: 60 passing** (`tests/`): the beta.9 voice suite
+  plus version-compare (newer/equal/older, beta ordering,
+  final-outranks-beta), malformed-response handling, and
+  silent-failure fetch paths (dead address, nonsense URL,
+  404/garbage stub responses).
+- Per the release policy, beta.8 retires with this release:
+  beta.10 (current) and beta.9 (fallback) are the two live
+  versions. Same signing key — installs over beta.9 and
+  everything before it.
+
 ## 0.1.0-beta.9 — 2026-11-07
 
 - **Calibrate — voice plan stage 2 ships, and stage 3's

@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- The ONLY permission Woven Oak asks for: the microphone,
-         used solely to record your loops on this device. -->
+    <!-- Two permissions, and only two:
+         - RECORD_AUDIO: the microphone, used solely to record
+           your loops on this device.
+         - INTERNET: used for exactly one thing — on launch, one
+           small request to GitHub asking whether a newer Woven
+           Oak has been published (beta.10+). Nothing about you
+           or your music is sent; no analytics, no telemetry, no
+           other network use anywhere in the app. Deliberately NO
+           ACCESS_NETWORK_STATE: the check does not need it, and
+           offline it simply fails silent. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-feature
         android:name="android.hardware.microphone"
         android:required="false" />

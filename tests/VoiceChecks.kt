@@ -4,7 +4,8 @@
  * Free software under the GNU General Public License v3; see LICENSE.
  *
  * The check suite for the voice work (Calibrate / VoiceBank /
- * VoicePlay): pure-Kotlin logic exercised on the JVM with
+ * VoicePlay) and the beta.10 update notifier (UpdateCheck):
+ * pure-Kotlin logic exercised on the JVM with
  * synthesized sung tones, so the rules can be verified without
  * a phone. Run it with tests/run-checks.sh. VoiceBank touches
  * android.content.Context only for its files directory, so the
@@ -135,6 +136,82 @@ fun main() {
     val expectLen = ((6 * 0.34f + 0.25f) * SR).toInt()
     check("voice phrase renders at phrase length", phrase != null && abs(phrase.size - expectLen) < 200, "size=${phrase?.size} expect=$expectLen")
     check("voice phrase is audible", phrase != null && rms(phrase, 0.1f, 0.4f) > 0.05)
+
+    // --- UpdateCheck: version comparison (beta.10's notifier) ---
+    check("update: beta.10 is newer than beta.9", UpdateCheck.isNewer("v0.1.0-beta.10", "0.1.0-beta.9"))
+    check("update: beta.9 is not newer than beta.10", !UpdateCheck.isNewer("v0.1.0-beta.9", "0.1.0-beta.10"))
+    check("update: same version is not newer", !UpdateCheck.isNewer("v0.1.0-beta.10", "0.1.0-beta.10"))
+    check("update: compare beta.10 < beta.11 is -1", UpdateCheck.compareVersions("0.1.0-beta.10", "0.1.0-beta.11") == -1)
+    check("update: 0.2.0 release is newer than 0.1.0-beta.99", UpdateCheck.isNewer("v0.2.0", "0.1.0-beta.99"))
+    check("update: final 0.1.0 outranks its own betas", UpdateCheck.isNewer("0.1.0", "0.1.0-beta.10"))
+    check("update: 0.1.1-beta.1 is newer than 0.1.0 final", UpdateCheck.isNewer("v0.1.1-beta.1", "0.1.0"))
+    check("update: malformed remote is never newer", !UpdateCheck.isNewer("banana", "0.1.0-beta.9"))
+    check("update: malformed own version is never newer", !UpdateCheck.isNewer("v9.9.9", "banana"))
+    check("update: empty tag parses to null", UpdateCheck.parseVersion("") == null)
+    check("update: bare 'v' parses to null", UpdateCheck.parseVersion("v") == null)
+    check("update: '0.1' equals '0.1.0'", UpdateCheck.compareVersions("0.1", "0.1.0") == 0)
+    check("update: compare with malformed side is null", UpdateCheck.compareVersions("v1.0.0", "banana") == null)
+
+    // --- UpdateCheck: parsing a GitHub latest-release body ---
+    val sampleJson = """
+        {"id": 1, "tag_name": "v0.1.0-beta.10", "name": "Woven Oak v0.1.0-beta.10",
+         "assets": [
+           {"name": "WovenOak-0.1.0-beta.10.apk.idsig",
+            "browser_download_url": "https://example.com/x.apk.idsig"},
+           {"name": "WovenOak-0.1.0-beta.10.apk",
+            "browser_download_url": "https://example.com/WovenOak-0.1.0-beta.10.apk"}
+         ],
+         "tarball_url": "https://example.com/tar", "zipball_url": "https://example.com/zip"}
+    """.trimIndent()
+    val parsed = UpdateCheck.parseLatestRelease(sampleJson)
+    check("update: sample release body parses", parsed != null)
+    check("update: parsed tag kept raw", parsed?.tag == "v0.1.0-beta.10")
+    check("update: parsed versionName drops the v", parsed?.versionName == "0.1.0-beta.10")
+    check("update: parsed apk url is the .apk asset, not the .idsig",
+        parsed?.apkUrl == "https://example.com/WovenOak-0.1.0-beta.10.apk")
+    check("update: empty body parses to null", UpdateCheck.parseLatestRelease("") == null)
+    check("update: garbage body parses to null", UpdateCheck.parseLatestRelease("not json at all") == null)
+    check("update: missing tag_name parses to null",
+        UpdateCheck.parseLatestRelease("""{"assets": []}""") == null)
+    check("update: no .apk asset parses to null",
+        UpdateCheck.parseLatestRelease(
+            """{"tag_name": "v1.0.0", "assets": [{"browser_download_url": "https://example.com/x.zip"}]}"""
+        ) == null)
+    check("update: malformed tag in body parses to null",
+        UpdateCheck.parseLatestRelease(
+            """{"tag_name": "banana", "assets": [{"browser_download_url": "https://example.com/x.apk"}]}"""
+        ) == null)
+
+    // --- UpdateCheck: the fetch itself — failure must be silent ---
+    check("update: fetch from a dead address is null (offline stays silent)",
+        UpdateCheck.fetchLatest("http://127.0.0.1:1/latest") == null)
+    check("update: fetch of a nonsense URL is null, no throw",
+        UpdateCheck.fetchLatest("not a url") == null)
+
+    // End-to-end through the real fetch code (timeouts, response
+    // handling, body read, parse) over a stub connection. A live
+    // socket test would be better, but Pepper's build sandbox
+    // routes JVM loopback traffic into its overlay network, so
+    // even a same-process server never sees the request — the
+    // stub exercises everything except the socket itself, which
+    // is stock HttpURLConnection behavior on a real phone.
+    fun stubConn(code: Int, body: String): java.net.HttpURLConnection {
+        return object : java.net.HttpURLConnection(java.net.URL("http://stub/latest")) {
+            override fun connect() {}
+            override fun disconnect() {}
+            override fun usingProxy(): Boolean = false
+            override fun getResponseCode(): Int = code
+            override fun getInputStream(): java.io.InputStream =
+                java.io.ByteArrayInputStream(body.toByteArray(Charsets.UTF_8))
+        }
+    }
+    val fetched = UpdateCheck.fetchLatest("http://stub/latest") { stubConn(200, sampleJson) }
+    check("update: fetch through a 200 stub parses the release",
+        fetched != null && fetched.tag == "v0.1.0-beta.10" && fetched.apkUrl.endsWith(".apk"))
+    check("update: fetch through a 404 stub is null",
+        UpdateCheck.fetchLatest("http://stub/latest") { stubConn(404, sampleJson) } == null)
+    check("update: fetch through a 200 stub with garbage body is null",
+        UpdateCheck.fetchLatest("http://stub/latest") { stubConn(200, "garbage") } == null)
 
     println()
     println("RESULT: $passed passed, $failed failed of ${passed + failed}")

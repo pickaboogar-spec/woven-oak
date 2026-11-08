@@ -7,6 +7,10 @@
  * Tap a pad to record; tap again and the take loops by itself.
  * Everything happens on this device; recordings never leave it.
  * No accounts, no telemetry, no ads — free forever.
+ * (Beta.10's one exception, at Paul's direction: on launch the
+ * app makes a single small request to GitHub asking whether a
+ * newer Woven Oak has been published — the app's only network
+ * use. See UpdateCheck.)
  */
 package com.damonini.wovenoak
 
@@ -178,7 +182,54 @@ class MainActivity : Activity() {
             renderPitch()
             renderRange()
         }
+        // The header version and the update check both read the
+        // version from the app itself (package info), never from
+        // a string copied into the code.
+        val ownVersion = try {
+            @Suppress("DEPRECATION")
+            packageManager.getPackageInfo(packageName, 0).versionName
+        } catch (e: Exception) {
+            null
+        }
+        if (ownVersion != null) {
+            findViewById<TextView>(R.id.versionLabel).text = "$ownVersion · free forever"
+            checkForUpdate(ownVersion)
+        }
         ui.post(ticker)
+    }
+
+    /**
+     * Once per launch (beta.10): ask GitHub whether a newer
+     * Woven Oak has been published, and if so offer it — "Update"
+     * opens the new APK in the browser, "Later" forgets it until
+     * the next launch. This is the app's ONLY network use, and
+     * every failure is silent: offline just means no dialog.
+     */
+    private fun checkForUpdate(ownVersion: String) {
+        thread(name = "wovenoak-update-check") {
+            val info = UpdateCheck.fetchLatest() ?: return@thread
+            if (!UpdateCheck.isNewer(info.tag, ownVersion)) return@thread
+            runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                AlertDialog.Builder(this)
+                    .setTitle("A new update is available")
+                    .setMessage(
+                        "Woven Oak ${info.versionName} is ready — you're " +
+                            "running $ownVersion. Do you wish to update?"
+                    )
+                    .setPositiveButton("Update") { _, _ ->
+                        try {
+                            startActivity(
+                                Intent(Intent.ACTION_VIEW, Uri.parse(info.apkUrl))
+                            )
+                        } catch (e: Exception) {
+                            // No browser to hand it to: nothing to do.
+                        }
+                    }
+                    .setNegativeButton("Later", null)
+                    .show()
+            }
+        }
     }
 
     private fun onPadTap(i: Int) {

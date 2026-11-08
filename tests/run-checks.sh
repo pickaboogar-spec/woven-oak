@@ -22,5 +22,6 @@ JAVA
 javac -d $WORK/classes $WORK/stub/android/content/Context.java
 $KOTLINC -cp $WORK/classes -d $WORK/checks.jar \
   $SRC/Pitch.kt $SRC/Calibrate.kt $SRC/VoiceBank.kt $SRC/VoicePlay.kt \
+  $SRC/UpdateCheck.kt \
   $(dirname "$0")/VoiceChecks.kt
 java -cp $WORK/checks.jar:$WORK/classes:$STDLIB VoiceChecksKt
